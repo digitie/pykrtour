@@ -147,12 +147,25 @@ class PlaceCoordinate(BaseModel):
     """장소의 기준 좌표 DTO.
 
     TripMate 하위 라이브러리의 장소형 데이터는 이 클래스를 좌표 경계 모델로 사용합니다.
-    내부 기준은 WGS84 `EPSG:4326`이며 축 순서는 저장과 geometry 생성에 유리한
-    `(lon, lat)`입니다. 지오코딩과 리버스 지오코딩은 이 클래스의 책임이 아닙니다.
+    내부 기준은 WGS84 `EPSG:4326`이며 축 순서는 `(lat, lon)`입니다.
+    지오코딩과 리버스 지오코딩은 이 클래스의 책임이 아닙니다.
     """
 
     model_config = _LOCATION_MODEL_CONFIG
 
+    lat: float = Field(
+        validation_alias=AliasChoices(
+            "lat",
+            "latitude",
+            "mapY",
+            "map_y",
+            "mapy",
+            "y",
+            "yValue",
+            "lcLatitude",
+            "위도",
+        )
+    )
     lon: float = Field(
         validation_alias=AliasChoices(
             "lon",
@@ -165,19 +178,6 @@ class PlaceCoordinate(BaseModel):
             "xValue",
             "lcLongitude",
             "경도",
-        )
-    )
-    lat: float = Field(
-        validation_alias=AliasChoices(
-            "lat",
-            "latitude",
-            "mapY",
-            "map_y",
-            "mapy",
-            "y",
-            "yValue",
-            "lcLatitude",
-            "위도",
         )
     )
     altitude_m: float | None = None
@@ -354,12 +354,7 @@ class PlaceCoordinate(BaseModel):
     def distance_to_m(self, other: PlaceCoordinate | Wgs84Point | LatLon) -> float:
         """다른 WGS84 좌표까지의 대권 거리를 미터 단위로 반환합니다."""
 
-        if isinstance(other, PlaceCoordinate):
-            target = other.to_wgs84_point()
-        elif isinstance(other, LatLon):
-            target = other.to_wgs84_point()
-        else:
-            target = other
+        target = other if isinstance(other, Wgs84Point) else other.to_wgs84_point()
         return haversine_distance_m(self.to_wgs84_point(), target)
 
     def distance_to_km(self, other: PlaceCoordinate | Wgs84Point | LatLon) -> float:
