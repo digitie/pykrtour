@@ -24,7 +24,8 @@ provider row와 ORM 사이의 작은 DTO다. 이 클래스들은 값을 검증�
 ## PlaceCoordinate
 
 `PlaceCoordinate`는 장소의 기준 좌표 DTO다. 내부 저장 기준은 WGS84 `EPSG:4326`이고,
-축 순서는 `Wgs84Point`와 같은 `(lon, lat)`이다.
+public DTO 축 순서는 `(lat, lon)`이다. WKT, GeoJSON, PostGIS geometry helper는 각 표준에 맞춰
+계속 `(lon, lat)`를 사용한다.
 
 주요 기능:
 
@@ -33,7 +34,7 @@ provider row와 ORM 사이의 작은 DTO다. 이 클래스들은 값을 검증�
 - provider row의 `lon`, `lng`, `longitude`, `mapx`, `x`, `xValue`, `lat`,
   `latitude`, `mapy`, `y`, `yValue` 같은 흔한 key에서 좌표 추출
 - provider가 `-99.000000` 같은 누락 sentinel을 좌표 key에 내려주면 좌표 없음으로 처리
-- DMS 문자열이나 hemisphere 표기가 있는 경도/위도에서 `from_values()`로 좌표 생성
+- DMS 문자열이나 hemisphere 표기가 있는 위도/경도에서 `from_values()`로 좌표 생성
 - `Wgs84Point`, `LatLon`, `KatecPoint`, `AirKoreaTmPoint`, `KmaGridPoint`와 변환
 - `distance_to_m()`, `distance_to_km()` 대권 거리 계산
 - `to_wkt()`, `to_ewkt()`, `to_geojson_geometry()` geometry helper
@@ -44,9 +45,10 @@ provider row와 ORM 사이의 작은 DTO다. 이 클래스들은 값을 검증�
 ```python
 from kraddr.base import PlaceCoordinate
 
-coord = PlaceCoordinate(lon="126.9780", lat="37.5665", accuracy_m="5")
-same_coord = PlaceCoordinate.from_values("126° 58' 40.8\" E", "37° 33' 59.4\" N")
+coord = PlaceCoordinate(lat="37.5665", lon="126.9780", accuracy_m="5")
+same_coord = PlaceCoordinate.from_values("37° 33' 59.4\" N", "126° 58' 40.8\" E")
 
+assert coord.as_tuple() == (37.5665, 126.978)
 assert coord.as_lon_lat() == (126.978, 37.5665)
 assert coord.as_lat_lon() == (37.5665, 126.978)
 assert same_coord.distance_to_km(coord) < 0.1

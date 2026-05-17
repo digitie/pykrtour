@@ -5,7 +5,7 @@
 
 이 패키지는 API 클라이언트가 아니라, `pymcst`, `pykrforest`, `pymois`, `pyairkorea`,
 `pykrairport`, `kex-openapi`, `pykma`, `opinet`, `pykhoa`, `visitkorea`,
-`pyvworld`, `pykrtourpoi`가 장소/축제/트래킹코스/관측소/공항/휴게소/주유소 데이터를
+`pyvworld`가 장소/축제/트래킹코스/관측소/공항/휴게소/주유소 데이터를
 같은 모양으로 다룰 때 쓰는 작은 타입 계층입니다.
 
 ## 포함 범위
@@ -59,8 +59,8 @@ assert poi.coordinate == Wgs84Point(129.1604, 35.1587)
 assert poi.feature_type is MapFeatureType.PLACE
 assert category_label("01050100") == "관광 > 자연명소 > 해수욕장"
 
-coord = PlaceCoordinate(lon="129.1604", lat="35.1587")
-same_coord = PlaceCoordinate.from_values("129° 9' 37.44\" E", "35° 9' 31.32\" N")
+coord = PlaceCoordinate(lat="35.1587", lon="129.1604")
+same_coord = PlaceCoordinate.from_values("35° 9' 31.32\" N", "129° 9' 37.44\" E")
 assert same_coord.distance_to_km(coord) < 0.1
 assert coord.to_sqlalchemy_values(lon_field="lon", lat_field="lat") == {
     "lon": 129.1604,

@@ -24,10 +24,12 @@ from kraddr.base import (
 
 
 def test_place_coordinate_normalizes_and_serializes_for_sqlalchemy() -> None:
-    coord = PlaceCoordinate(lon="126.9780", lat="37.5665", accuracy_m="3.5")
+    coord = PlaceCoordinate(lat="37.5665", lon="126.9780", accuracy_m="3.5")
 
+    assert tuple(coord.model_dump().keys())[:2] == ("lat", "lon")
     assert coord.map_x == 126.978
     assert coord.map_y == 37.5665
+    assert coord.as_tuple() == (37.5665, 126.978)
     assert coord.as_lon_lat() == (126.978, 37.5665)
     assert coord.as_lat_lon() == (37.5665, 126.978)
     assert coord.to_wgs84_point() == Wgs84Point(126.978, 37.5665)
@@ -54,26 +56,26 @@ def test_place_coordinate_normalizes_and_serializes_for_sqlalchemy() -> None:
 def test_place_coordinate_mapping_and_coordinate_conversions() -> None:
     coord = place_coordinate_from_mapping({"mapx": "129.1604", "mapy": "35.1587"})
 
-    assert coord == PlaceCoordinate(lon=129.1604, lat=35.1587)
+    assert coord == PlaceCoordinate(lat=35.1587, lon=129.1604)
     assert place_coordinate_from_mapping({"mapX": "126.9769", "mapY": "37.5796"}) == (
-        PlaceCoordinate(lon=126.9769, lat=37.5796)
+        PlaceCoordinate(lat=37.5796, lon=126.9769)
     )
     assert PlaceCoordinate.model_validate({"map_x": "126.9769", "map_y": "37.5796"}) == (
-        PlaceCoordinate(lon=126.9769, lat=37.5796)
+        PlaceCoordinate(lat=37.5796, lon=126.9769)
     )
     assert place_coordinate_from_mapping({"xValue": "127.104165", "yValue": "37.332651"}) == (
-        PlaceCoordinate(lon=127.104165, lat=37.332651)
+        PlaceCoordinate(lat=37.332651, lon=127.104165)
     )
     assert place_coordinate_from_mapping({"xValue": "-99.000000", "yValue": "-99.000000"}) is None
     assert PlaceCoordinate.from_tuple((35.1587, 129.1604), order="lat_lon") == coord
-    assert PlaceCoordinate.from_values("129° 9' 37.44\" E", "35° 9' 31.32\" N") == coord
+    assert PlaceCoordinate.from_values("35° 9' 31.32\" N", "129° 9' 37.44\" E") == coord
     assert PlaceCoordinate.from_wgs84_point(Wgs84Point(129.1604, 35.1587)) == coord
     assert isinstance(coord.to_katec(), KatecPoint)
     assert coord.to_kma_grid().nx > 0
 
 
 def test_place_coordinate_uses_opinet_katec_projection() -> None:
-    gangnam = PlaceCoordinate(lon=127.0276, lat=37.4979)
+    gangnam = PlaceCoordinate(lat=37.4979, lon=127.0276)
     katec = gangnam.to_katec()
 
     assert katec.x == pytest.approx(314213.3092)
@@ -88,11 +90,11 @@ def test_place_coordinate_uses_opinet_katec_projection() -> None:
 
 def test_place_coordinate_rejects_invalid_range() -> None:
     with pytest.raises(ValueError):
-        PlaceCoordinate(lon=200, lat=37)
+        PlaceCoordinate(lat=37, lon=200)
     with pytest.raises(ValueError):
-        PlaceCoordinate(lon=127, lat=95)
+        PlaceCoordinate(lat=95, lon=127)
     with pytest.raises(ValueError):
-        PlaceCoordinate(lon=127, lat=37, srid=5174)
+        PlaceCoordinate(lat=37, lon=127, srid=5174)
 
 
 def test_jibun_address_exposes_legal_dong_parts_and_orm_values() -> None:

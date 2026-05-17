@@ -147,12 +147,25 @@ class PlaceCoordinate(BaseModel):
     """장소의 기준 좌표 DTO.
 
     TripMate 하위 라이브러리의 장소형 데이터는 이 클래스를 좌표 경계 모델로 사용합니다.
-    내부 기준은 WGS84 `EPSG:4326`이며 축 순서는 저장과 geometry 생성에 유리한
-    `(lon, lat)`입니다. 지오코딩과 리버스 지오코딩은 이 클래스의 책임이 아닙니다.
+    내부 기준은 WGS84 `EPSG:4326`이며 public DTO 축 순서는 `(lat, lon)`입니다.
+    지오코딩과 리버스 지오코딩은 이 클래스의 책임이 아닙니다.
     """
 
     model_config = _LOCATION_MODEL_CONFIG
 
+    lat: float = Field(
+        validation_alias=AliasChoices(
+            "lat",
+            "latitude",
+            "mapY",
+            "map_y",
+            "mapy",
+            "y",
+            "yValue",
+            "lcLatitude",
+            "위도",
+        )
+    )
     lon: float = Field(
         validation_alias=AliasChoices(
             "lon",
@@ -165,19 +178,6 @@ class PlaceCoordinate(BaseModel):
             "xValue",
             "lcLongitude",
             "경도",
-        )
-    )
-    lat: float = Field(
-        validation_alias=AliasChoices(
-            "lat",
-            "latitude",
-            "mapY",
-            "map_y",
-            "mapy",
-            "y",
-            "yValue",
-            "lcLatitude",
-            "위도",
         )
     )
     altitude_m: float | None = None
@@ -217,39 +217,39 @@ class PlaceCoordinate(BaseModel):
         if point is None:
             return None
         return cls(
-            lon=point.lon,
             lat=point.lat,
+            lon=point.lon,
             altitude_m=first_value(row, "altitude_m", "altitude", "고도"),
             accuracy_m=first_value(row, "accuracy_m", "accuracy", "정확도"),
         )
 
     @classmethod
-    def from_values(cls, longitude: Any, latitude: Any) -> PlaceCoordinate:
-        """decimal 또는 DMS 유사 경도/위도 값으로 기준 좌표 DTO를 만듭니다."""
+    def from_values(cls, latitude: Any, longitude: Any) -> PlaceCoordinate:
+        """decimal 또는 DMS 유사 위도/경도 값으로 기준 좌표 DTO를 만듭니다."""
 
         return cls(
-            lon=round(to_decimal_degrees(longitude, kind="longitude"), 12),
             lat=round(to_decimal_degrees(latitude, kind="latitude"), 12),
+            lon=round(to_decimal_degrees(longitude, kind="longitude"), 12),
         )
 
     @classmethod
     def from_wgs84_point(cls, point: Wgs84Point) -> PlaceCoordinate:
         """`Wgs84Point(lon, lat)`에서 기준 좌표 DTO를 만듭니다."""
 
-        return cls(lon=point.lon, lat=point.lat)
+        return cls(lat=point.lat, lon=point.lon)
 
     @classmethod
     def from_latlon(cls, point: LatLon) -> PlaceCoordinate:
         """`LatLon(lat, lon)`에서 기준 좌표 DTO를 만듭니다."""
 
-        return cls(lon=point.lon, lat=point.lat)
+        return cls(lat=point.lat, lon=point.lon)
 
     @classmethod
     def from_tuple(
         cls,
         value: tuple[float, float],
         *,
-        order: TupleOrder = "lon_lat",
+        order: TupleOrder = "lat_lon",
     ) -> PlaceCoordinate:
         """tuple 좌표를 기준 좌표 DTO로 변환합니다."""
 
@@ -257,8 +257,8 @@ class PlaceCoordinate(BaseModel):
             raise ValueError("coordinate tuple must contain exactly two values")
         first, second = value
         if order == "lon_lat":
-            return cls(lon=first, lat=second)
-        return cls(lon=second, lat=first)
+            return cls(lat=second, lon=first)
+        return cls(lat=first, lon=second)
 
     @classmethod
     def from_katec(cls, point: KatecPoint) -> PlaceCoordinate:
@@ -307,9 +307,9 @@ class PlaceCoordinate(BaseModel):
         return self.lat, self.lon
 
     def as_tuple(self) -> tuple[float, float]:
-        """`(lon, lat)` 순서로 반환합니다."""
+        """public DTO 기준인 `(lat, lon)` 순서로 반환합니다."""
 
-        return self.lonlat
+        return self.latlon
 
     def as_lon_lat(self) -> tuple[float, float]:
         """`(lon, lat)` 순서 명시 alias입니다."""
@@ -354,12 +354,7 @@ class PlaceCoordinate(BaseModel):
     def distance_to_m(self, other: PlaceCoordinate | Wgs84Point | LatLon) -> float:
         """다른 WGS84 좌표까지의 대권 거리를 미터 단위로 반환합니다."""
 
-        if isinstance(other, PlaceCoordinate):
-            target = other.to_wgs84_point()
-        elif isinstance(other, LatLon):
-            target = other.to_wgs84_point()
-        else:
-            target = other
+        target = other if isinstance(other, Wgs84Point) else other.to_wgs84_point()
         return haversine_distance_m(self.to_wgs84_point(), target)
 
     def distance_to_km(self, other: PlaceCoordinate | Wgs84Point | LatLon) -> float:
