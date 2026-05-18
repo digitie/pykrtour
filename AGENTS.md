@@ -25,6 +25,14 @@ TripMate 하위 Python 라이브러리들이 공통으로 쓰는 POI 값 객체,
   변환은 `geo` extra로 둡니다.
 - 기본 테스트는 네트워크 없이 동작해야 합니다.
 
+## Provider API 사용 원칙
+
+- 이 저장소는 원격 API wrapper가 아니라 downstream 라이브러리가 직접 쓰는 공통 값 객체와 helper를 제공합니다.
+- 외부 API 관련 작업을 시작하기 전에, provider별 wrapper/adapter/gateway가 아니라 안정된 public API 직접 사용 방식이 유지되는지 먼저 확인합니다.
+- 단순 전달용 wrapper, 장기 호환 alias, 임시 facade를 만들지 않습니다.
+- `python-*-api`, TripMate, `python-krtour-map`에서 공통 타입이 부족하면 별도 wrapper를 만들지 않고 이 저장소의 public 타입/enum/helper를 먼저 안정화합니다.
+- 다른 라이브러리에 검증된 구현이 있으면 wrapper로 감싸지 말고 라이선스와 출처를 확인한 뒤 현재 구조에 직접 반영합니다.
+
 ## 모듈 지도
 
 - `src/kraddr/base/categories.py`: TripMate 8자리 POI category enum/dataclass/tree helper.
@@ -69,8 +77,8 @@ TripMate 하위 Python 라이브러리들이 공통으로 쓰는 POI 값 객체,
   리턴값으로 직접 사용합니다.
 - 이 원칙은 "최소 수정"보다 우선합니다. 공통 구현을 직접 쓰기 위해 공개 API 변경이
   필요하면 문서와 테스트를 함께 갱신해 새 경계를 명확히 합니다.
-- `pykrtourpoi`의 category 정의는 `kraddr.base.categories`로 옮기고, `pykrtourpoi`는
-  `python-kraddr-base`에 의존합니다. 별도 호환 wrapper를 새로 만들지 않습니다.
+- VisitKorea 계열 category 정의는 `kraddr.base.categories`로 옮기고, 해당 provider
+  패키지는 `python-kraddr-base`에 의존합니다. 별도 호환 wrapper를 새로 만들지 않습니다.
 - `pymois`, `pyairkorea`, `opinet`, `pykma`, `kex-openapi`, `pykrairport`의 좌표 값 객체는
   새 코드부터 `kraddr.base.coordinates`를 우선 사용합니다.
 - `pymcst`, `pykrforest`, `pykhoa`, `visitkorea`처럼 provider별 POI row를 갖는 패키지는

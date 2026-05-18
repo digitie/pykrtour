@@ -32,9 +32,9 @@ class PoiSource(StrEnum):
     PYKMA = "pykma"
     OPINET = "opinet"
     PYKHOA = "pykhoa"
-    PYKRTOURAPI = "pykrtourapi"
+    VISITKOREA = "visitkorea"
     PYVWORLD = "pyvworld"
-    PYKRTOURPOI = "pykrtourpoi"
+    TRIPMATE_POI = "tripmate_poi"
     TRIPMATE = "tripmate"
 
 
